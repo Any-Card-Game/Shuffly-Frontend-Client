@@ -1,0 +1,40 @@
+<html><head><title>Spoke</title><script type="text/javascript" src="http://sync3.frozenmountain.com/client.js?v=3.4.2"></script>
+
+<script type="text/javascript">
+    var client = fm.websync.client; // shortcut
+    var util = fm.utilities;        // shortcut
+    
+    client.subscribe({
+        channel: '/test',
+        onSuccess: function(args) { // optional
+            util.log('Subscribed!');
+        },
+        onFailure: function(args) { // optional
+            util.log('Subscribe failed: ' + args.error);
+        },
+        onReceive: function(args) {
+            util.log('Received data: ' + args.data.text);
+        }
+    });
+    
+    function publishData() {
+        client.publish({
+            channel: '/test',
+            data: {
+                text: document.getElementById('text').value
+            },
+            onSuccess: function(args) { // optional
+                util.log('Published!');
+            },
+            onFailure: function(args) { // optional
+                util.log('Publish failed: ' + args.error);
+            }
+        });
+    }
+</script>
+
+
+</head><body>
+<input type="text" id="text" />
+<button onclick="publishData(); return false;">Publish</button>
+</body></html>
