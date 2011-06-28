@@ -4,8 +4,21 @@
     var client = fm.websync.client; // shortcut
     var util = fm.utilities;        // shortcut
     
+    client.initialize({
+        key: '035d9877-9eaf-45ef-936f-80087fb3a221' // your *public* key
+    });
+    
+    client.connect({
+        onSuccess: function(args) { // optional
+            util.log('Connected!');
+        },
+        onFailure: function(args) { // optional
+            util.log('Connect failed: ' + args.error);
+        }
+    });
+
     client.subscribe({
-        channel: '/test',
+        channel: '/consolepublisher',
         onSuccess: function(args) { // optional
             util.log('Subscribed!');
         },
@@ -19,7 +32,7 @@
     
     function publishData() {
         client.publish({
-            channel: '/test',
+            channel: '/consolepublisher',
             data: {
                 text: document.getElementById('text').value
             },
