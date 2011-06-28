@@ -26,15 +26,39 @@
             util.log('Subscribe failed: ' + args.error);
         },
         onReceive: function(args) {
-            util.log('Received data: ' + args.data.text);
+          if(args.data.Question){
+            util.log('Question: ' + args.data.Question);
+            for(i=0;i<args.data.Answers.length;i++)
+              {
+                util.log(" " +i+"-"+args.data.Answers[i]);
+              }
+          }
+          else{
+            util.log('Received data: ' + args.data);
+          }
         }
     });
     
-    function publishData() {
+    function joinGame() {
         client.publish({
             channel: '/consolepublisher',
             data: {
-                text: document.getElementById('text').value
+                Type: 0
+            },
+            onSuccess: function(args) { // optional
+                util.log('Published!');
+            },
+            onFailure: function(args) { // optional
+                util.log('Publish failed: ' + args.error);
+            }
+        });
+    }    
+    function answerQuestion() {
+        client.publish({
+            channel: '/consolepublisher',
+            data: {
+                Type: 1,
+                AnswerIndex:document.getElementById('text').value
             },
             onSuccess: function(args) { // optional
                 util.log('Published!');
@@ -44,10 +68,9 @@
             }
         });
     }
-</script>
-
-
+</script> 
 </head><body>
-<input type="text" id="text" />
-<button onclick="publishData(); return false;">Publish</button>
+<button onclick="joinGame(); return false;">Join Game</button>
+<br />
+<input type="text" id="text" /> <button onclick="answerQuestion(); return false;">Answer Question</button>
 </body></html>
