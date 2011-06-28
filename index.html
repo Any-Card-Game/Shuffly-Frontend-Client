@@ -26,24 +26,43 @@
             util.log('Subscribe failed: ' + args.error);
         },
         onReceive: function(args) {
+   
+            util.log('Received data: ' +JSON.stringify(args.data));
+          
+        }
+    });    
+    
+
+    
+    function joinGame() {
+        client.subscribe({
+        channel: '/consolepublisher/'+document.getElementById('name').value,
+        onSuccess: function(args) { // optional
+            util.log('Subscribed!');
+        },
+        onFailure: function(args) { // optional
+            util.log('Subscribe failed: ' + args.error);
+        },
+        onReceive: function(args) {
           if(args.data.Question){
             util.log('Question: ' + args.data.Question);
             for(i=0;i<args.data.Answers.length;i++)
               {
-                util.log(" " +i+"-"+args.data.Answers[i]);
+                util.log("<a href='javascript:answerQuestion("+i+")' >"+args.data.Answers[i]+"</a>");
               }
           }
           else{
-            util.log('Received data: ' + args.data);
+            util.log('Received data: ' + JSON.stringify(args.data));
           }
         }
     });
     
-    function joinGame() {
+    
         client.publish({
             channel: '/consolepublisher',
             data: {
-                Type: 0
+                Type: 0,
+                PlayerName:document.getElementById('name').value
             },
             onSuccess: function(args) { // optional
                 util.log('Published!');
@@ -53,12 +72,12 @@
             }
         });
     }    
-    function answerQuestion() {
+    function answerQuestion(id) {
         client.publish({
             channel: '/consolepublisher',
             data: {
                 Type: 1,
-                AnswerIndex:document.getElementById('text').value
+                AnswerIndex:id
             },
             onSuccess: function(args) { // optional
                 util.log('Published!');
@@ -70,6 +89,8 @@
     }
 </script> 
 </head><body>
+
+Name: <input type="text" id="name" /> <br />
 <button onclick="joinGame(); return false;">Join Game</button>
 <br />
 <input type="text" id="text" /> <button onclick="answerQuestion(); return false;">Answer Question</button>
