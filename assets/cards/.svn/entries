@@ -1,0 +1,16 @@
+8
+
+dir
+0
+https://secure.svnrepository.com/s_rmeetze/anycardgame/AnyCardGame/assets/cards
+https://secure.svnrepository.com/s_rmeetze/anycardgame
+add
+
+
+
+
+
+
+
+svn:special svn:externals svn:needs-lock
+
