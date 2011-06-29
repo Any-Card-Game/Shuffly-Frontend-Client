@@ -20,37 +20,40 @@ function toInt(n){ return Math.round(n); };
             util.log('Connected!');
         },
         onFailure: function(args) { // optional
-            util.log('Connect failed: ' + args.error);
+          //  util.log('Connect failed: ' + args.error);
         }
     });
     client.subscribe({
         channel: '/consolepublisher',
         onSuccess: function(args) { // optional
-            util.log('Subscribed!');
+          //  util.log('Subscribed!');
         },
         onFailure: function(args) { // optional
-            util.log('Subscribe failed: ' + args.error);
+          //  util.log('Subscribe failed: ' + args.error);
         },
         onReceive: function(args) {
-            util.log('Received data: ' +JSON.stringify(args.data));
+        //    util.log('Received data: ' +JSON.stringify(args.data));
         }
     });    
     function joinGame() {
  client.subscribe({
         channel: '/consolepublisher/'+document.getElementById('name').value,
         onSuccess: function(args) { // optional
-            util.log('Subscribed!');
+          //  util.log('Subscribed!');
         },
         onFailure: function(args) { // optional
-            util.log('Subscribe failed: ' + args.error);
+          //  util.log('Subscribe failed: ' + args.error);
         },
         onReceive: function(args) {
+        
           if(args.data.Question){
-            util.log('Question: ' + args.data.Question);
+            document.getElementById("question").innerText=args.data.Question;
+            st=""
             for(i=0;i<args.data.Answers.length;i++)
               {
-                util.log("<a href='javascript:answerQuestion("+i+")' >"+args.data.Answers[i]+"</a>");
+                st+=("<a href='javascript:answerQuestion("+i+")' >"+args.data.Answers[i]+"</a><br />");
               }
+              document.getElementById("answers").innerHTML=st;
           }
           else{
             util.log('Received data: ' + JSON.stringify(args.data));
@@ -60,14 +63,15 @@ function toInt(n){ return Math.round(n); };
     client.subscribe({
         channel: '/consolepublisher/gamedata/'+document.getElementById('name').value,
         onSuccess: function(args) { // optional
-            util.log('Subscribed!');
+         //   util.log('Subscribed!');
         },
         onFailure: function(args) { // optional
-            util.log('Subscribe failed: ' + args.error);
+         //   util.log('Subscribe failed: ' + args.error);
         },
         onReceive: function(args) { 
           if(args.data.MainArea){
-            $("#gameBoard").empty();
+            gameboard.clearRect(0, 0, canvas.width, canvas.height);
+
             mainArea=args.data.MainArea; 
             drawArea(mainArea);
             
@@ -76,7 +80,7 @@ function toInt(n){ return Math.round(n); };
             }
           }
           else{
-            util.log('Received data: ' + JSON.stringify(args.data));
+          //  util.log('Received data: ' + JSON.stringify(args.data));
           }
         }
     });
@@ -87,14 +91,16 @@ function toInt(n){ return Math.round(n); };
                 PlayerName:document.getElementById('name').value
             },
             onSuccess: function(args) { // optional
-                util.log('Published!');
+            //    util.log('Published!');
             },
             onFailure: function(args) { // optional
-                util.log('Publish failed: ' + args.error);
+           //     util.log('Publish failed: ' + args.error);
             }
         });
     }    
     function answerQuestion(id) {
+      document.getElementById("question").innerText="";
+      document.getElementById("answers").innerHTML="";
         client.publish({
             channel: '/consolepublisher',
             data: {
@@ -102,28 +108,35 @@ function toInt(n){ return Math.round(n); };
                 AnswerIndex:id
             },
             onSuccess: function(args) { // optional
-                util.log('Published!');
+            //    util.log('Published!');
             },
             onFailure: function(args) { // optional
-                util.log('Publish failed: ' + args.error);
+           //     util.log('Publish failed: ' + args.error);
             }
         });
     }
+    
+    $(function(){gameboard=document.getElementById('canvas').getContext('2d');
+      gameboard.font = 14+ "pt Arial";
+    })
+    
     
     
     
     function drawArea(mainArea){
     
             dim=mainArea.Dimensions;
-            f=$("<div style='border:1px red solid; position:absolute;' />");
-            $("#gameBoard").append(f)
-            f.css('width',dim.width);
-            f.css('height',dim.height);
-            f.css('left',dim.x);
-            f.css('top',dim.y);
+            gameboard.fillStyle = "rgba(0, 0, 200, 0.5)";
+            gameboard.fillRect (dim.x,dim.y,dim.width,dim.height);
+            cardCount=0;
+            for(i=0;i<mainArea.Spaces.length;i++){
+              space=mainArea.Spaces[i];
+              cardCount+=space.Cards.length;
+            }            
             
-            xMultiply=dim.width/(mainArea.NumberOfCardsHorizontal==-1?13:mainArea.NumberOfCardsHorizontal);
-            yMultiply=dim.height/(mainArea.NumberOfCardsVertical==-1?13:mainArea.NumberOfCardsVertical);
+            
+            xMultiply=dim.width/(mainArea.NumberOfCardsHorizontal==-1?cardCount:mainArea.NumberOfCardsHorizontal);
+            yMultiply=dim.height/(mainArea.NumberOfCardsVertical==-1?cardCount:mainArea.NumberOfCardsVertical);
             
             for(i=0;i<mainArea.Spaces.length;i++){
               space=mainArea.Spaces[i];
@@ -131,10 +144,12 @@ function toInt(n){ return Math.round(n); };
               yOff=0;
               for(j=0;j<space.Cards.length;j++){
                 card=space.Cards[j];
-                cardPiece=$("<img src='"+drawCard(card)+"' style='position:absolute; left:"+toInt((space.X+xOff)*xMultiply+dim.x)+"px; top:"+toInt((space.Y+yOff)*yMultiply+dim.y)+"px;' />");
-           f.append(cardPiece);
                 
-                
+                var img = new Image();
+                xx=toInt((space.X+xOff)*xMultiply+dim.x);
+                yy=toInt((space.Y+yOff)*yMultiply+dim.y);
+                img.src = drawCard(card);
+                gameboard.drawImage(img,xx,yy);
                 xOff++;
                 if(xOff>(space.Width==-1?space.Cards.length:space.Width)){
                   xOff=0;
@@ -147,9 +162,9 @@ function toInt(n){ return Math.round(n); };
             }
             for(i=0;i<mainArea.TextAreas.length;i++){
               ta=mainArea.TextAreas[i]; 
-              tac=$("<span style='position:absolute; left:"+toInt((ta.X)*xMultiply+dim.x)+"px; top:"+toInt((ta.Y)*yMultiply+dim.y)+"px;' >"+ta.Text+"</span>");
-            f.append(tac);
-            }
+              gameboard.fillStyle = "rgba(200, 0, 200, 0.5)";
+              gameboard.fillText(ta.Text, toInt((ta.X)*xMultiply+dim.x), toInt((ta.Y)*yMultiply+dim.y));
+                       }
     }
     
     
@@ -158,7 +173,7 @@ function toInt(n){ return Math.round(n); };
     
 function drawCard(card) {
     var src = '';
-    var domain = 'http://www.lamplightonline.com/assets';
+    var domain = '/assets';
     switch (card.CardName) {
         case 'AceDiamonds':
             src = domain + '/cards/101';
@@ -331,13 +346,14 @@ function drawCard(card) {
  Name: <input type="text" id="name"/><br/>
 <button onclick="joinGame(); return false;">Join Game</button>
 <br/>
-<input type="text" id="text"/><button onclick="answerQuestion(); return false;">Answer Question</button>
+
+<span id="question" ></span>
+<div id="answers" ></div>
 
 
-<div id="gameBoard">
-  
-</div>
 
+<canvas id="canvas" width="900" height="600">
+</canvas>
 
 </body>
 </html>
