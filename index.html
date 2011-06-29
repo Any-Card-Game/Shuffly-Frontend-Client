@@ -1,13 +1,20 @@
-<html><head><title>Spoke</title><script type="text/javascript" src="http://sync3.frozenmountain.com/client.js?v=3.4.2"></script>
+<html>
+<head>
+<title>Spoke</title>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js" type="text/javascript"></script>
+
+<script type="text/javascript" src="http://sync3.frozenmountain.com/client.js?v=3.4.2"></script>
 
 <script type="text/javascript">
+
+function toInt(n){ return Math.round(n); };
+
+
     var client = fm.websync.client; // shortcut
     var util = fm.utilities;        // shortcut
-    
     client.initialize({
         key: '035d9877-9eaf-45ef-936f-80087fb3a221' // your *public* key
     });
-    
     client.connect({
         onSuccess: function(args) { // optional
             util.log('Connected!');
@@ -16,7 +23,6 @@
             util.log('Connect failed: ' + args.error);
         }
     });
-
     client.subscribe({
         channel: '/consolepublisher',
         onSuccess: function(args) { // optional
@@ -26,16 +32,11 @@
             util.log('Subscribe failed: ' + args.error);
         },
         onReceive: function(args) {
-   
             util.log('Received data: ' +JSON.stringify(args.data));
-          
         }
     });    
-    
-
-    
     function joinGame() {
-        client.subscribe({
+ client.subscribe({
         channel: '/consolepublisher/'+document.getElementById('name').value,
         onSuccess: function(args) { // optional
             util.log('Subscribed!');
@@ -55,9 +56,61 @@
             util.log('Received data: ' + JSON.stringify(args.data));
           }
         }
+    }); 
+    client.subscribe({
+        channel: '/consolepublisher/gamedata/'+document.getElementById('name').value,
+        onSuccess: function(args) { // optional
+            util.log('Subscribed!');
+        },
+        onFailure: function(args) { // optional
+            util.log('Subscribe failed: ' + args.error);
+        },
+        onReceive: function(args) { 
+          if(args.data.MainArea){
+            mainArea=args.data.MainArea; 
+            dim=mainArea.Dimensions;
+            $("#gameBoard").empty();
+            f=$("<div style='border:1px red solid; position:absolute;' />");
+            $("#gameBoard").append(f)
+            f.css('width',dim.width);
+            f.css('height',dim.height);
+            f.css('left',dim.x);
+            f.css('top',dim.y);
+            
+            xMultiply=dim.width/mainArea.NumberOfCardsHorizontal;
+            yMultiply=dim.height/mainArea.NumberOfCardsVertical;
+            
+            for(i=0;i<mainArea.Spaces.length;i++){
+              space=mainArea.Spaces[i];
+              xOff=0;
+              yOff=0;
+              for(j=0;j<space.Cards.length;j++){
+                card=space.Cards[j];
+                cardPiece=$("<span style='position:absolute; left:"+toInt((space.X+xOff)*xMultiply+dim.x)+"px; top:"+toInt((space.Y+yOff)*yMultiply+dim.y)+"px;' >"+card.CardNumber +" "+card.CardType+"</span>");
+                $("#gameBoard").append(cardPiece);
+                
+                xOff++;
+                if(xOff>space.Width){
+                  xOff=0;
+                  yOff++;
+                }
+                if(yOff>space.Height){
+                  alert('error');
+                }
+              }  
+            }
+            for(i=0;i<mainArea.TextAreas.length;i++){
+              ta=mainArea.TextAreas[i]; 
+              tac=$("<span style='position:absolute; left:"+toInt((ta.X)*xMultiply+dim.x)+"px; top:"+toInt((ta.Y)*yMultiply+dim.y)+"px;' >"+ta.Text+"</span>");
+              $("#gameBoard").append(tac);
+            }
+            
+          }
+          else{
+            util.log('Received data: ' + JSON.stringify(args.data));
+          }
+        }
     });
-    
-    
         client.publish({
             channel: '/consolepublisher',
             data: {
@@ -87,11 +140,22 @@
             }
         });
     }
-</script> 
-</head><body>
-
-Name: <input type="text" id="name" /> <br />
+    
+    
+    
+</script>
+</head>
+<body>
+ Name: <input type="text" id="name"/><br/>
 <button onclick="joinGame(); return false;">Join Game</button>
-<br />
-<input type="text" id="text" /> <button onclick="answerQuestion(); return false;">Answer Question</button>
-</body></html>
+<br/>
+<input type="text" id="text"/><button onclick="answerQuestion(); return false;">Answer Question</button>
+
+
+<div id="gameBoard">
+  
+</div>
+
+
+</body>
+</html>
