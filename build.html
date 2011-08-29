@@ -1,275 +1,235 @@
 ﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-    
-    <head>
-        <meta name="generator" content="HTML Tidy for Linux/x86 (vers 11 February 2007), see www.w3.org"
-        />
-        <title>
-            Spoke
-        </title>
-        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"
-        type="text/javascript">
+<head>
+    <meta name="generator" content="HTML Tidy for Linux/x86 (vers 11 February 2007), see www.w3.org" />
+    <title>Spoke </title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js" type="text/javascript">
                                 
-        </script>
-        <script src="http://cufon.shoqolate.com/js/cufon-yui.js?v=1.09i" type="text/javascript">
+    </script>
+    <script src="http://cufon.shoqolate.com/js/cufon-yui.js?v=1.09i" type="text/javascript">
                                 
-        </script>
-        <script src="javascript/raphael-min.js" type="text/javascript">
-                                
-        </script>
-        <script src="javascript/teen.cufonfonts.js" type="text/javascript">
-                                
-        </script>
-        <script type="text/javascript">
-                                //<![CDATA[
-            $(function () {
-
-                var paper = Raphael("spokeBuilder");
+    </script>
+    <script src="javascript/raphael-min.js" type="text/javascript"></script>
+    <script src="javascript/teen.cufonfonts.js" type="text/javascript"></script>    
+    <script src="javascript/SpokeEngine.js" type="text/javascript"></script>
 
 
+    <script type="text/javascript">
 
-                c = paper.circle(450, 450, 90).attr({
+        $(function () {
+            var paper = Raphael("spokeBuilder");
+            r = paper;
+            var txt = r.print(10, 50, "print", r.getFont("teen"), 30).attr({
+                fill: "#CCC"
+            });
+            // following line will paint first letter in red
+            txt[0].attr({
+                fill: "#f00"
+            });
+            txt.hover(function (event) {
+                this.attr({
+                    fill: "red"
+                });
+            }, function (event) {
+                this.attr({
                     fill: "black"
-                }); ;
-
-
-
-                r = paper;
-
-                var txt = r.print(10, 50, "print", r.getFont("teen"), 30).attr({
-                    fill: "#CCC"
                 });
-                // following line will paint first letter in red
-                txt[0].attr({
-                    fill: "#f00"
-                });
-
-                txt.hover(function (event) {
-                    this.attr({
-                        fill: "red"
-                    });
-                }, function (event) {
-                    this.attr({
-                        fill: "black"
-                    });
-                });
-
-
-                c.hover(function (event) {
-                    this.attr({
-                        fill: "red"
-                    });
-                }, function (event) {
-                    this.attr({
-                        fill: "black"
-                    });
-                });
-
-
-
-
-
-                var zss = ["assets/cards/101.gif", "assets/cards/102.gif", "assets/cards/103.gif", "assets/cards/104.gif", "assets/cards/105.gif", "assets/cards/106.gif", "assets/cards/107.gif"];
-
-
-                var maxAngleVariation = 17;
-                var angleIncrease = (maxAngleVariation * 2) / (zss.length - 1);
-                var startAngle = -maxAngleVariation
-                var left = 132;
-                var top = 410;
-                var effectWidth = 20;
-                for (var zs in zss) {
-                    var z = zss[zs];
-                    var c = paper.image(z, left, top + Math.abs(startAngle), 71, 96);
-                    c.scale(1.2);
-
-
-
-                    var start = function () {
-                        // storing original coordinates
-
-
-                        this.ox = this.attr("x");
-                        this.oy = this.attr("y");
-
-
-                        qq = paper.rect(this.ox - effectWidth, this.oy - effectWidth, this.attr("width") + effectWidth * 2, this.attr("height") + effectWidth * 2, effectWidth);
-                        qq.attr({
-                            fill: "#BFB"
-                            ,opacity:0
-                        });
-                        qq.rotate(this.STARTANGLE, true);
-                        qq.toBack();
-
-                        
-                        qq.animate({
-                            rotation: 0 
-                        }, 320, "bounce");
-                        qq.animate({ 
-                            opacity: .5
-                        }, 320 );
-
-
-                        this.effects = [qq];
-
-                        this.animate({
-                            rotation: 0
-                        }, 320, "bounce");
-                             this.animate({
-                            opacity: .5
-                        }, 320);
-
-
-                        this.ox = this.attr("x");
-                        this.oy = this.attr("y");
-
-                    },
-                                    move = function (dx, dy) {
-                                        // move will be called with dx and dy
-                                        this.attr({
-                                            x: this.ox + dx,
-                                            y: this.oy + dy
-                                        });
-
-
-                                        for (ind = 0; ind < this.effects.length; ind++) {
-                                            this.effects[ind].attr({
-                                                x: this.ox + dx - effectWidth,
-                                                y: this.oy + dy - effectWidth
-                                            });
-                                        }
-
-
-                                    },
-                                    up = function () {
-                                        // restoring state
-                                        this.animate({
-                                            rotation: this.STARTANGLE 
-                                        }, 700, ">"); 
-                                        this.animate({
-                                            opacity: .9
-                                        }, 700 );
-                                        this.animate({
-                                            x: this.ox,
-                                            y: this.oy
-                                        }, 700, ">"); 
-
-
-                                        for (ind = 0; ind < this.effects.length; ind++) {
-
-
-                                            this.effects[ind].animate({
-                                                rotation: this.STARTANGLE
-                                            }, 700, ">", function () { this.remove(); });
-                                              this.effects[ind].animate({
-                                                opacity: 0
-                                            }, 700, function () { this.remove(); });
-
-                                            this.effects[ind].animate({
-                                                x: this.ox-effectWidth,
-                                                y: this.oy - effectWidth
-                                            }, 700, ">"); 
-
-
-
-
-                                        }
-
-
-
-
-                                    };
-                    c.drag(move, start, up);
-
-
-
-
-
-                    c.STARTANGLE = startAngle;
-                    c.STARTX = c.attr('x');
-                    c.STARTY = c.attr('y');
-
-                    c.rotate(startAngle, true);
-                    startAngle += angleIncrease;
-
-
-                    left = left + 35;
-                }
-
-
-
-                cards = []
-                for (i = 0; i < 52; i++) {
-
-
-                    var c = paper.image("assets/cards/155.gif", 180 + i * 3, 50, 71, 96).attr({
-                        fill: "hsb(.8, 1, 1)",
-                        stroke: "none",
-                        opacity: .9,
-                        scale: 1.2
-                    });
-
-                    cards.push(c);
-
-
-                    var start = function () {
-                        // storing original coordinates
-                        for (ij = 0; ij < cards.length; ij++) {
-                            v = cards[ij];
-
-
-                            v.ox = v.attr("x");
-                            v.oy = v.attr("y");
-                            v.attr({
-                                opacity: .5
-                            });
-
-
-                        }
-
-
-
-
-
-                    },
-                                    move = function (dx, dy) {
-                                        // move will be called with dx and dy
-                                        for (ij = 0; ij < cards.length; ij++) {
-                                            v = cards[ij];
-
-
-                                            v.attr({
-                                                x: v.ox + dx,
-                                                y: v.oy + dy
-                                            });
-                                        }
-
-
-                                    },
-                                    up = function () {
-                                        // restoring state
-                                        for (ij = 0; ij < cards.length; ij++) {
-                                            v = cards[ij];
-
-                                            v.attr({
-                                                opacity: .9
-                                            });
-                                        }
-                                    };
-                    c.drag(move, start, up);
-                }
             });
 
+            zss = [];
+            for (ic = 1; ic < 53; ic++)
+                zss.push({ card: "assets/cards/1" + ic + ".gif", effects: [{}] });
 
+            var maxAngleVariation = 22;
+            var angleIncrease = (maxAngleVariation * 2) / (zss.length - 1);
+            var startAngle = -maxAngleVariation
+            var left = 132;
+            var top = 410;
+            var effectWidth = 20;
+            maxWidth = 600;
+            for (var zs in zss) {
+                var z = zss[zs];
+                var c = paper.image(z.card, left, top + Math.abs(startAngle), 71, 96);
+                c.scale(1.2);
+                c.effects = [];
 
+                for (ia = 0; ia < z.effects.length; ia++) {
+                    qq = paper.rect(c.ox - effectWidth, c.oy - effectWidth, c.attr("width") + effectWidth * 2, c.attr("height") + effectWidth * 2, effectWidth);
+                    qq.attr({
+                        fill: "#FF0000",
+                        opacity: 0
+                    });
+                    qq.OFFSET = (effectWidth);
+                    qq.rotate(c.STARTANGLE, true);
+                    qq.toBack();
+                    qq.animate({
+                        rotation: 0
+                    }, 320, "bounce");
+                    qq.animate({
+                        opacity: .5
+                    }, 320);
+                }
 
-                        //]]>
-        </script>
-    </head>
-    
-    <body style="background-color: #000080;">
-        <div id="spokeBuilder" style="margin: 0px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%;">
-        </div>
-    </body>
-
+                var start = function () {
+                    // storing original coordinates
+                    if (this.ox && this.oy) {
+                        if (!(this.ox == this.attr("x") && this.oy == this.attr("y"))) {
+                            return false;
+                        }
+                    }
+                    this.ox = this.attr("x");
+                    this.oy = this.attr("y");
+                    qq = paper.rect(this.ox - effectWidth, this.oy - effectWidth, this.attr("width") + effectWidth * 2, this.attr("height") + effectWidth * 2, effectWidth);
+                    qq.attr({
+                        fill: "#FFD700",
+                        opacity: 0
+                    });
+                    qq.OFFSET = (effectWidth);
+                    qq.rotate(this.STARTANGLE, true);
+                    qq.toBack();
+                    qq.animate({
+                        rotation: 0
+                    }, 320, "bounce");
+                    qq.animate({
+                        opacity: .5
+                    }, 320);
+                    this.effects.push(qq);
+                    qq = paper.rect(this.ox - (effectWidth / 2), this.oy - (effectWidth / 2), this.attr("width") + (effectWidth / 2) * 2, this.attr("height") + (effectWidth / 2) * 2, effectWidth);
+                    qq.attr({
+                        fill: "#FFD700",
+                        opacity: 0
+                    });
+                    qq.OFFSET = (effectWidth / 2);
+                    qq.rotate(this.STARTANGLE, true);
+                    qq.toBack();
+                    qq.animate({
+                        rotation: 0
+                    }, 320, "bounce");
+                    qq.animate({
+                        opacity: .5
+                    }, 320);
+                    this.effects.push(qq);
+                    qq = paper.rect(this.ox - (effectWidth / 1.5), this.oy - (effectWidth / 1.5), this.attr("width") + (effectWidth / 1.5) * 2, this.attr("height") + (effectWidth / 1.5) * 2, effectWidth);
+                    qq.attr({
+                        fill: "#FFD700",
+                        opacity: 0
+                    });
+                    qq.OFFSET = (effectWidth / 1.5);
+                    qq.rotate(this.STARTANGLE, true);
+                    qq.toBack();
+                    qq.animate({
+                        rotation: 0
+                    }, 320, "bounce");
+                    qq.animate({
+                        opacity: .5
+                    }, 320);
+                    this.effects.push(qq);
+                    this.animate({
+                        rotation: 0
+                    }, 320, "bounce");
+                    this.animate({
+                        opacity: .5
+                    }, 320);
+                    this.ox = this.attr("x");
+                    this.oy = this.attr("y");
+                },
+        move = function (dx, dy) {
+            // move will be called with dx and dy
+            this.attr({
+                x: this.ox + dx,
+                y: this.oy + dy
+            });
+            for (ind = 0; ind < this.effects.length; ind++) {
+                this.effects[ind].attr({
+                    x: this.ox + dx - this.effects[ind].OFFSET,
+                    y: this.oy + dy - this.effects[ind].OFFSET
+                });
+            }
+        },
+        up = function () {
+            // restoring state
+            this.animate({
+                rotation: this.STARTANGLE
+            }, 700, ">");
+            this.animate({
+                opacity: .9
+            }, 700);
+            this.animate({
+                x: this.ox,
+                y: this.oy
+            }, 700, ">");
+            for (ind = 0; ind < this.effects.length; ind++) {
+                this.effects[ind].animate({
+                    rotation: this.STARTANGLE
+                }, 700, ">", function () {
+                    this.remove();
+                });
+                this.effects[ind].animate({
+                    opacity: 0
+                }, 700, function () {
+                    this.remove();
+                });
+                this.effects[ind].animate({
+                    x: this.ox - this.effects[ind].OFFSET,
+                    y: this.oy - this.effects[ind].OFFSET
+                }, 700, ">");
+            }
+        };
+                c.drag(move, start, up);
+                c.STARTANGLE = startAngle;
+                c.STARTX = c.attr('x');
+                c.STARTY = c.attr('y');
+                c.rotate(startAngle, true);
+                startAngle += angleIncrease;
+                left = left + maxWidth / zss.length;
+            }
+            cards = []
+            for (i = 0; i < 52; i++) {
+                var c = paper.image("assets/cards/155.gif", 180 + i * 3, 50, 71, 96).attr({
+                    fill: "hsb(.8, 1, 1)",
+                    stroke: "none",
+                    opacity: .9,
+                    scale: 1.2
+                });
+                cards.push(c);
+                var start = function () {
+                    // storing original coordinates
+                    for (ij = 0; ij < cards.length; ij++) {
+                        v = cards[ij];
+                        v.ox = v.attr("x");
+                        v.oy = v.attr("y");
+                        v.attr({
+                            opacity: .5
+                        });
+                    }
+                },
+        move = function (dx, dy) {
+            // move will be called with dx and dy
+            for (ij = 0; ij < cards.length; ij++) {
+                v = cards[ij];
+                v.attr({
+                    x: v.ox + dx,
+                    y: v.oy + dy
+                });
+            }
+        },
+        up = function () {
+            // restoring state
+            for (ij = 0; ij < cards.length; ij++) {
+                v = cards[ij];
+                v.attr({
+                    opacity: .9
+                });
+            }
+        };
+                c.drag(move, start, up);
+            }
+        });
+    </script>
+</head>
+<body style="background-color: #000080;">
+    <div id="spokeBuilder" style="margin: 0px; position: absolute; top: 0px; left: 0px;
+        height: 100%; width: 100%;">
+    </div>
+</body>
 </html>

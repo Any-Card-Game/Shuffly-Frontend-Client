@@ -105,7 +105,7 @@ CodeMirror.defineMode("Spoke", function (config, parserConfig) {
                     return "createdef";
                 }
                 if (state.wasClass) {
-                    alert("Class " +word);
+                    //alert("Class " +word);
                     state.wasClass = false;
                     return "createclass";
                 }
