@@ -10,10 +10,8 @@
                                 
     </script>
     <script src="javascript/raphael-min.js" type="text/javascript"></script>
-    <script src="javascript/teen.cufonfonts.js" type="text/javascript"></script>    
+    <script src="javascript/teen.cufonfonts.js" type="text/javascript"></script>
     <script src="javascript/SpokeEngine.js" type="text/javascript"></script>
-
-
     <script type="text/javascript">
 
         $(function () {
@@ -43,10 +41,10 @@
             var maxAngleVariation = 22;
             var angleIncrease = (maxAngleVariation * 2) / (zss.length - 1);
             var startAngle = -maxAngleVariation
-            var left = 132;
-            var top = 410;
+            var left = 0;
+            var top = 150;
             var effectWidth = 20;
-            maxWidth = 600;
+            maxWidth = 1000;
             for (var zs in zss) {
                 var z = zss[zs];
                 var c = paper.image(z.card, left, top + Math.abs(startAngle), 71, 96);
