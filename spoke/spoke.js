@@ -11,10 +11,13 @@ CodeMirror.defineMode("Spoke", function (config, parserConfig) {
                 "if": A,
                 "def": A,
                 "class": A,
+                "template": C,
+                "enum": C,
                 "else": A,
                 "create": A,
                 "return": A,
                 "yield": A,
+                "type": A,
                 "macro": A,
                 "true": B,
                 "false": B,
@@ -35,16 +38,26 @@ CodeMirror.defineMode("Spoke", function (config, parserConfig) {
     }
 
 
+    function arrayContains(a, obj) {
+    var i = a.length;
+    while (i--) {
+       if (a[i] === obj) {
+           return true;
+       }
+    }
+    return false;
+}
 
     var isOperatorChar = /[+\-*&%,\:.=<>()!?|]/;
 
-    function parseStream(startOfLine, stream, state) {
+    function generateTokens(stream, state) {
+        var tokens=[];
 
-
-        var ch = stream.next();
+       var ch = stream.next();
         if (/\d/.test(ch)) {
             stream.match(/^\d*(?:\.\d*)?(?:e[+\-]?\d+)?/);
-            return "number";
+            tokens.push({type:'number',value:stream.current()});
+            
         } else if (isOperatorChar.test(ch) || ch == '}' || ch == '{') {
 
 
@@ -98,7 +111,14 @@ CodeMirror.defineMode("Spoke", function (config, parserConfig) {
             if (keywords[word] == null) {
                 if (state.wasCreate) {
                     state.wasCreate = false;
-                    return "createclass";
+
+                    var i = globalState.classes.length;
+                    while (i--) {
+                       if (globalState.classes[i].className == word) {
+                           return "createclass";
+                        }
+                    }
+                    return "error";
                 }
                 if (state.wasDef) {
                     state.wasDef = false;
@@ -134,12 +154,22 @@ CodeMirror.defineMode("Spoke", function (config, parserConfig) {
             }
             return keywords[word];
         }
+        
+    }
+
+    function parseStream(globalState,startOfLine, stream, state) { 
     }
 
 
 
 
     return {
+    
+        startGlobalState: function () {
+            this.globalState={
+                classes:[]
+            };
+        },
         startState: function (basecolumn) {
             return {
                 wasCreate: false,
@@ -161,11 +191,111 @@ CodeMirror.defineMode("Spoke", function (config, parserConfig) {
 
             if (stream.eatSpace()) return null;
 
-            var style = parseStream(state.startOfLine, stream, state);
+            var style = parseStream(this.globalState,state.startOfLine, stream, state);
 
             if (!stream.sol()) state.startOfLine = false;
 
             return style;
+        },
+        preToken: function (stream, state) {
+            if (stream.sol()) {
+                state.startOfLine = true;
+                state.defLine = false;
+            }
+            if (stream.eatSpace()) return ;
+             
+            if (!stream.sol()) state.startOfLine = false;
+
+
+
+            var ch = stream.next();
+        if (/\d/.test(ch)) {
+            stream.match(/^\d*(?:\.\d*)?(?:e[+\-]?\d+)?/);
+            return ;
+        } else  if (isOperatorChar.test(ch) || ch == '}' || ch == '{') {
+
+
+            state.wasPeroid = false;
+
+            if (ch == '.') state.wasPeroid = true;
+
+
+            if (ch == '=' && stream.peek() == '>') {
+                stream.next();
+                return "specoperatorb";
+            }
+            if (ch == '|' && stream.peek() == '(') {
+                stream.next();
+                return "specoperatorc";
+            }
+
+
+            if (state.wasDef && ch == '(') {
+                state.defParams = true;
+                state.wasDef = false;
+            }
+            if (ch == ')' && state.defParams) {
+                state.defParams = false;
+            }
+
+            if (ch == '{') {
+                state.inObjectVarSet = true;
+                state.wasCreate = false;
+            }
+            if (ch == '}') {
+                state.inObjectVarSet = false;
+            }
+
+            return "specoperatora";
+        }
+
+
+
+
+
+
+
+
+          
+            stream.eatWhile(/[\w\$_]/);
+
+            var word = stream.current().toLowerCase();
+          
+
+            if (word == "class") {state.wasClass = true;
+            this.globalState.classes.push({className:'',methods:[],fields:[]});
+            return;}else
+            if (word == "def") {
+                this.globalState.classes[this.globalState.classes.length-1].methods.push({name:'',numberOfFields:0});
+                state.defLine = true;
+                state.wasDef = true;
+                return;
+            }
+            else if (state.defParams) {
+               mts=this.globalState.classes[this.globalState.classes.length-1].methods;
+                    mts[mts.length-1].numberOfFields++;
+                return;
+            }
+    
+
+                if (state.wasDef) {
+                    state.wasDef = false;
+                    mts=this.globalState.classes[this.globalState.classes.length-1].methods;
+                    mts[mts.length-1].name=word;
+
+                    
+                return;
+                }
+                if (state.wasClass) {
+                    //alert("Class " +word);
+                    state.wasClass = false;
+                    this.globalState.classes[this.globalState.classes.length-1].className=word;
+                    stream.skipToEnd();
+                return;
+                }   
+    
+                    stream.skipToEnd();     
+                return  ;   
         }
     };
 });

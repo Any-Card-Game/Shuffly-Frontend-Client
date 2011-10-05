@@ -483,6 +483,8 @@ var CodeMirror = (function () {
                 }
             }
 
+            preHighlightLines(0, lines.length);
+
             // Add these lines to the work array, so that they will be
             // highlighted. Adjust work lines if lines were added/removed.
             var newWork = [], lendiff = newText.length - nlines - 1;
@@ -497,6 +499,8 @@ var CodeMirror = (function () {
             } else {
                 newWork.push(from.line);
             }
+
+
             work = newWork;
             startWorker(100);
             // Remember that these lines changed, for updating the display
@@ -1323,6 +1327,17 @@ var CodeMirror = (function () {
                 line.stateAfter = copyState(mode, state);
             }
         }
+        function preHighlightLines(start, end) {
+            var state = mode.startState();
+            mode.startGlobalState();
+            mode.globalState.classes = [];
+            for (var i = start; i < end; ++i) {
+                var line = lines[i];
+                line.preHighlight(mode, state);
+            }
+            //  alert(JSON.stringify(globalState));
+        }
+
         function highlightWorker() {
             var end = +new Date + options.workTime;
             var foundWork = work.length;
@@ -1451,7 +1466,7 @@ var CodeMirror = (function () {
                         if (reverse ? (pos.ch >= len && (match = line.lastIndexOf(query, pos.ch - len)) != -1)
                         : (match = line.indexOf(query, pos.ch)) != -1)
                             return { from: { line: pos.line, ch: match },
-                                to: { line: pos.line, ch: match + len}
+                                to: { line: pos.line, ch: match + len }
                             };
                     };
                 else
@@ -1762,6 +1777,8 @@ var CodeMirror = (function () {
         // array, which contains alternating fragments of text and CSS
         // classes.
         highlight: function (mode, state) {
+
+
             var stream = new StringStream(this.text), st = this.styles, pos = 0;
             var changed = false, curWord = st[0], prevWord;
             if (this.text == "" && mode.blankLine) mode.blankLine(state);
@@ -1788,6 +1805,20 @@ var CodeMirror = (function () {
             // because they are likely to highlight the same way in various
             // contexts.
             return changed || (st.length < 5 && this.text.length < 10);
+        },
+        preHighlight: function (mode, state) {
+            var stream = new StringStream(this.text), st = this.styles, pos = 0;
+            var changed = false, curWord = st[0], prevWord;
+            if (this.text == "" && mode.blankLine) mode.blankLine(state);
+            while (!stream.eol()) {
+                mode.preToken(stream, state);
+                stream.start = stream.pos;
+                // Give up when line is ridiculously long
+                if (stream.pos > 5000) {
+                    st[pos++] = this.text.slice(stream.pos); st[pos++] = null;
+                    break;
+                }
+            }
         },
         // Fetch the parser token for a given character. Useful for hacks
         // that want to inspect the mode state (say, for completion).
@@ -1984,7 +2015,7 @@ var CodeMirror = (function () {
     } ());
 
     var tabSize = 4;
-       var mac = /Mac/.test(navigator.platform);
+    var mac = /Mac/.test(navigator.platform);
     var movementKeys = {};
     for (var i = 35; i <= 40; ++i)
         movementKeys[i] = movementKeys["c" + i] = true;
