@@ -99,7 +99,7 @@ function Simulation(numOfMasses, m,
         this.masses[a] = new Mass(m);
     }
 
-    this.springConstant = 0.0375/2 ;
+    this.springConstant = 0.00001 ;
     
     this.getMass = function (index) {
         if (index < 0 || index >= this.numOfMasses)		// if the index is not in the array
@@ -236,7 +236,7 @@ function Simulation(numOfMasses, m,
     this.draw = function (canv) {
 
         canv.fillStyle = WireColor;
-        canv.lineWidth = 2; 
+        canv.lineWidth = 2;
         canv.strokeStyle = "#333";
         var b;
         for (b = 0; b < this.numOfMasses; ++b) {
@@ -250,10 +250,9 @@ function Simulation(numOfMasses, m,
                 canv.lineTo(pos1.x, pos1.y);
 
 
-        } canv.stroke();
-
-
-
+        } 
+        canv.stroke();
+        
         canv.fillStyle = "#334";
         canv.font = "13pt Arial bold";
 

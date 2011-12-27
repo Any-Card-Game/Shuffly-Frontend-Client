@@ -1,4 +1,4 @@
-﻿
+﻿var DEBUG = false;
 
 
 function randColor() {
@@ -9,7 +9,7 @@ function Lights(canvasName) {
     var that = this;
     that.Wires = [];
     that.UIAreas = [];
-
+    that.messages = [];
     this.canvas = $("#" + canvasName);
     this.canvasItem = document.getElementById(canvasName).getContext("2d");
 
@@ -20,40 +20,75 @@ function Lights(canvasName) {
     this.canvasHeight = 0;
 
 
+    var infoArea = new UIArea(350, 60, 200, 150);
+    infoArea.visible = false;
+    that.UIAreas.push(infoArea);
+    
 
-    function addEmptyWire(color) {
-        that.Wires.push({ Lights: [], State: true, Color: color });
-    }
 
-
-    addEmptyWire(randColor());
 
     var area = new UIArea(40, 40, 250, 220);
     that.UIAreas.push(area);
-    area.textAreas.push(new TextArea(25, 50, "Hi", "15pt Arial bold","blue"));
-    area.buttons.push({ x: 50, y: 50, width: 120, height: 22, Clicking: false, text: "New Wire", Click: function () { addEmptyWire("rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")"); }, Color: "rgb(50,150,50)" });
+    area.addControl(new TextArea(25, 50, "Hi", "15pt Arial bold", "blue"));
+    area.addControl(new Button(50, 50, 120, 22, "New Wire", "13pt Arial bold", "rgb(50,150,50)",
+        function () {
+            addEmptyWire("rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")");
+        }));
 
-    var btn;var intv;
-    area.buttons.push(btn = { x: 30, y: 150, width: 180, height: 22, Clicking: false, text: "Start Random", Click: function () {
-        if (btn.text == "Start Random") {
-            btn.text = "Stop Random";
-            intv = setInterval(tick3, 250);
-        } else {
-            btn.text = "Start Random";
-            clearInterval(intv);
+    var intv;
+    var setInfoUI = function (wire1) {
+        infoArea.controls = [];
+        infoArea.addControl(new TextArea(25, 50, "This wire has " + wire1.Lights.length + " lights.", "10pt Arial bold", "blue"));
+        infoArea.addControl(new TextArea(25, 75, "Its color is " + wire1.color + ".", "10pt Arial bold", "blue"));
+  
+    };
+
+    area.addControl(new Button(30, 75, 180, 22, "Start Random", "13pt Arial bold", "rgb(50,150,50)",
+        function () {
+            if (this.text == "Start Random") {
+                this.text = "Stop Random";
+                intv = setInterval(tick3, 10);
+            } else {
+                this.text = "Start Random";
+                clearInterval(intv);
+            }
+        }));
+    var ctls;
+    area.addControl(ctls = new ScrollBox(30, 100, 25, 4, 100, "rgb(50,60,127)"));
+
+
+    function addEmptyWire(color) {
+        var wire;
+        that.Wires.push(wire = { Lights: [], State: true, color: color });
+        var btn;
+
+        ctls.addControl(btn = new Button(0, 0, 0, 0, "Wire " + (that.Wires.length-1), "10pt Arial", "rgb(50,190,90)", function () {
+            if (infoArea.tag != wire) {
+                infoArea.visible = true;
+            }else
+                infoArea.visible = !infoArea.visible;
+
+            setInfoUI(wire);
+            infoArea.tag = wire;
+
+
+        }));
+        btn.tag = wire;
+    }
+    addEmptyWire(randColor());
+
+
+    function getCursorPosition(event,print) {
+        if (event.targetTouches && event.targetTouches.length>0) event = event.targetTouches[0];
+
+        if (event.pageX != null && event.pageY != null) {
+            
+            return { x: event.pageX, y: event.pageY };
         }
-    }, Color: "rgb(50,150,50)"
-    });
-
-    function getCursorPosition(event) {
-        if (event.targetTouches) event = event.targetTouches[0];
-
-        var x;
-        var y;
-        if (event.pageX != null && event.pageY != null) return that.last = { x: event.pageX, y: event.pageY };
-        var element = (!document.compatMode || document.compatMode == 'CSS1Compat') ? document.documentElement : document.body;
-
-        return that.last = { x: event.clientX + element.scrollLeft, y: event.clientY + element.scrollTop };
+        if (print) alert(stringify(event));
+        if (event.x != null && event.y != null) return { x: event.x, y: event.y };
+        if (print) alert(stringify(event));
+        return  { x: event.clientX  , y: event.clientY   };
     }
 
     function addLight(x, y, skip) {
@@ -73,6 +108,7 @@ function Lights(canvasName) {
         }
 
         var fc = that.Wires[that.Wires.length - 1].Lights;
+        ctls.controls[ctls.controls.length - 1].text = "Wire " + that.Wires.length + " " + fc.length;
         var light;
         fc.push(light = { x: x, y: y, RopeSimulations: [] });
 
@@ -151,26 +187,49 @@ function Lights(canvasName) {
                 0.05, // Each Particle Has A Weight Of 50 Grams
                 10000.0, // springConstant In The Rope 
                 1.7, // Spring Inner Friction Constant
-                {x: 0, y: 9.81 * 1499 }, // Gravitational Acceleration
+                {x: 0, y: 9.81 * 799 }, // Gravitational Acceleration
                 0.9, // Air Friction Constant
                 startPos, endPos, render);
     }
 
     function canvasOnClick(e) {
+        e.preventDefault();
+        
         var cell = getCursorPosition(e);
-
-
-        for (var ij = 0; ij < that.UIAreas.length; ij++) {
-            var are = that.UIAreas[ij];
-            if (are.y <= cell.y && are.y + are.height > cell.y && are.x <= cell.x && are.x + are.width > cell.x) {
-                return are.click(e);
+       
+        var goodArea=null;
+        var are;
+        var ij;
+        for (ij = 0; ij < that.UIAreas.length; ij++) {
+            are = that.UIAreas[ij];
+            if (are.visible && are.y <= cell.y && are.y + are.height > cell.y && are.x <= cell.x && are.x + are.width > cell.x) {
+                goodArea = are;
+                var ec = { x: cell.x - are.x, y: cell.y - are.y };
+                are.click(ec);
             }
         }
+        
+        if(goodArea) {
+            for (ij = 0; ij < that.UIAreas.length; ij++) {
+                are = that.UIAreas[ij];
+                if (goodArea == are) {
+                    are.depth = 1;
+                } else are.depth = 0;
+            } 
+            
+            return false;
+
+        }
+
+
+
         if (e.shiftKey) {
             removeLight(cell.x, cell.y);
 
-        } else if (e.button == 0) {
-            addLight(cell.x, cell.y);
+        } else {
+            if (!e.button || e.button == 0) {
+                addLight(cell.x, cell.y);
+            }
         }
 
         return e.preventDefault() && false;
@@ -204,15 +263,17 @@ function Lights(canvasName) {
 
         for (var ij = 0; ij < that.UIAreas.length; ij++) {
             var are = that.UIAreas[ij];
-            if (are.y <= cell.y &&
+            if (are.visible && are.y <= cell.y &&
                     are.y + are.height > cell.y &&
-                        are.x <= cell.x && 
+                        are.x <= cell.x &&
                             are.x + are.width > cell.x) {
+                cell = { x: cell.x - are.x, y: cell.y - are.y };
+
                 return are.mouseMove(cell);
             }
         }
-        
-        
+
+
         cell.x -= mouseOffset.x;
         cell.y -= mouseOffset.y;
         for (var j = 0; j < that.Wires.length; j++) {
@@ -251,42 +312,45 @@ function Lights(canvasName) {
 
     }
     function canvasMouseUp(e) {
+        e.preventDefault();
         mouseOffset = { x: 0, y: 0 };
-        var cell = getCursorPosition(e);
-
+   
+        var cell = getCursorPosition(e,true);
+ 
 
         for (var j = 0; j < that.Wires.length; j++) {
             var g = that.Wires[j].Lights;
             for (var i = 0; i < g.length; i++) {
-                if (inBounds(cell.x, cell.y, g[i].x, g[i].y, 12)) {
                     g[i].moving = false;
-                    return;
-                }
+                   
             }
         }
 
 
 
         for (var ij = 0; ij < that.UIAreas.length; ij++) {
-            var area = that.UIAreas[ij];
-            area.mouseUp(e);
+            var are = that.UIAreas[ij];
+            var ec = { x: cell.x - are.x, y: cell.y - are.y };
+            are.mouseUp(ec);
         }
 
     }
 
 
     var handleScroll = function (evt) {
+        evt.preventDefault();
         var delta = evt.wheelDelta ? evt.wheelDelta / 40 : evt.detail ? -evt.detail : 0;
 
 
         for (var ij = 0; ij < that.UIAreas.length; ij++) {
             var are = that.UIAreas[ij];
-            if (are.y <= evt.y && are.y + are.height > evt.y && are.y <= evt.x && are.y + are.width > evt.x) {
+            if (are.visible && are.y <= evt.y && are.y + are.height > evt.y && are.x <= evt.x && are.x + are.width > evt.x) {
+                evt = { x: evt.x - are.x, y: evt.y - are.y, delta: delta };
                 return are.scroll(evt);
             }
         }
-        
-        
+
+
         for (var j = 0; j < that.Wires.length; j++) {
             for (var k = 0; k < that.Wires[j].Lights.length; k++) {
                 for (var l = 0; l < that.Wires[j].Lights[k].RopeSimulations.length; l++) {
@@ -329,6 +393,7 @@ function Lights(canvasName) {
 
     var Grey = "rgb(199,199,199)";
     var Light = { W: 17, H: 45 };
+
     that.draw = function () {
         that.canvasItem.fillStyle = "lightgrey";
         that.canvasItem.fillRect(0, 0, that.canvasWidth, that.canvasHeight);
@@ -346,7 +411,7 @@ function Lights(canvasName) {
                 }
 
 
-                that.canvasItem.fillStyle = (light.moving ? "rgb(17,95,200)" : (wire.State ? wire.Color : Grey));
+                that.canvasItem.fillStyle = (light.moving ? "rgb(17,95,200)" : (wire.State ? wire.color : Grey));
                 that.canvasItem.strokeStyle = "#FF0";
 
 
@@ -358,14 +423,24 @@ function Lights(canvasName) {
             }
         }
 
-        for (ij = 0; ij < that.UIAreas.length; ij++) {
-            var are = that.UIAreas[ij];
+        var cl = JSLINQ(that.UIAreas).OrderBy(function (f) {
+            return f.depth;
+        });
+
+        for (ij = 0; ij < cl.items.length; ij++) {
+            var are = cl.items[ij];
             are.draw(that.canvasItem);
-        }   
+        }
+        if (DEBUG) {
+            for (var i = 0; i < that.messages.length; i++) {
+                that.canvasItem.fillText(that.messages[i], 10, 10 + i * 30);
+            }
+        }
+
     };
 
 
-    
+
     $(window).resize(this.resizeCanvas);
     this.resizeCanvas();
     setInterval(this.draw, 10);
@@ -385,7 +460,7 @@ function Lights(canvasName) {
         }
     }
     setInterval(tick2, 1000);
- 
+
 
 };
  
