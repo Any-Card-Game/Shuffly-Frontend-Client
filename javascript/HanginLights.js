@@ -8,7 +8,7 @@ function randColor() {
 function Lights(canvasName) {
     var that = this;
     that.Wires = [];
-    that.Buttons = [];
+    that.UIAreas = [];
 
     this.canvas = $("#" + canvasName);
     this.canvasItem = document.getElementById(canvasName).getContext("2d");
@@ -27,7 +27,23 @@ function Lights(canvasName) {
 
 
     addEmptyWire(randColor());
-    that.Buttons.push({ X: 50, Y: 50, Width: 120, Height: 22, Clicking: false, Text: "New Wire", Click: function () { addEmptyWire("rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")"); }, Color: "rgb(50,150,50)" });
+
+    var area = new UIArea(40, 40, 250, 220);
+    that.UIAreas.push(area);
+    area.textAreas.push(new TextArea(25, 50, "Hi", "15pt Arial bold","blue"));
+    area.buttons.push({ x: 50, y: 50, width: 120, height: 22, Clicking: false, text: "New Wire", Click: function () { addEmptyWire("rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")"); }, Color: "rgb(50,150,50)" });
+
+    var btn;var intv;
+    area.buttons.push(btn = { x: 30, y: 150, width: 180, height: 22, Clicking: false, text: "Start Random", Click: function () {
+        if (btn.text == "Start Random") {
+            btn.text = "Stop Random";
+            intv = setInterval(tick3, 250);
+        } else {
+            btn.text = "Start Random";
+            clearInterval(intv);
+        }
+    }, Color: "rgb(50,150,50)"
+    });
 
     function getCursorPosition(event) {
         if (event.targetTouches) event = event.targetTouches[0];
@@ -40,12 +56,16 @@ function Lights(canvasName) {
         return that.last = { x: event.clientX + element.scrollLeft, y: event.clientY + element.scrollTop };
     }
 
-    function addLight(x, y) {
+    function addLight(x, y, skip) {
 
         for (var j = 0; j < that.Wires.length; j++) {
             var g = that.Wires[j].Lights;
             for (var i = 0; i < g.length; i++) {
-                if (inBounds(x, y, g[i].X, g[i].Y)) {
+                if (inBounds(x, y, g[i].x, g[i].y)) {
+                    if (skip) {
+                        return;
+                    }
+                    mouseOffset = { x: x - g[i].x, y: y - g[i].y };
                     g[i].moving = true;
                     return;
                 }
@@ -54,11 +74,11 @@ function Lights(canvasName) {
 
         var fc = that.Wires[that.Wires.length - 1].Lights;
         var light;
-        fc.push(light = { X: x, Y: y, RopeSimulations: [] });
+        fc.push(light = { x: x, y: y, RopeSimulations: [] });
 
         if (fc.length > 1) {
-            light.RopeSimulations.push(addRopeSim({x: fc[fc.length - 1].X, y: fc[fc.length - 1].Y }, { x: fc[fc.length - 2].X, y: fc[fc.length - 2].Y }, false));
-            fc[fc.length - 2].RopeSimulations.push(addRopeSim({x: fc[fc.length - 2].X, y: fc[fc.length - 2].Y }, { x: fc[fc.length - 1].X, y: fc[fc.length - 1].Y },true));
+            light.RopeSimulations.push(addRopeSim({ x: fc[fc.length - 1].x, y: fc[fc.length - 1].y }, { x: fc[fc.length - 2].x, y: fc[fc.length - 2].y }, false));
+            fc[fc.length - 2].RopeSimulations.push(addRopeSim({ x: fc[fc.length - 2].x, y: fc[fc.length - 2].y }, { x: fc[fc.length - 1].x, y: fc[fc.length - 1].y }, true));
         }
         else {
             light.RopeSimulations.push(null);
@@ -68,7 +88,7 @@ function Lights(canvasName) {
     function inBounds(x1, y1, x2, y2) {
 
         if (x1 > x2 - Light.W && x1 < x2 + Light.W &&
-            y1 > y2-5  && y1 < y2 + Light.H)
+            y1 > y2 - 5 && y1 < y2 + Light.H)
             return true;
         return false;
     }
@@ -79,7 +99,7 @@ function Lights(canvasName) {
             var g = that.Wires[j].Lights;
             var removed = false;
             for (var i = 0; i < g.length; i++) {
-                if (inBounds(x, y, g[i].X, g[i].Y)) {
+                if (inBounds(x, y, g[i].x, g[i].y)) {
                     for (var k = 0; k < g[i - 1].RopeSimulations.length; k++) {
                         if (g[i].RopeSimulations[k])
                             g[i].RopeSimulations[k].remove = true;
@@ -89,7 +109,7 @@ function Lights(canvasName) {
                             g[i - 1].RopeSimulations[1].remove = true;
                             g[i - 1].RopeSimulations.splice(1, 1);
                             that.Wires[j].Lights.splice(i, 1);
-                            
+
                             return;
                         } else {
 
@@ -114,8 +134,8 @@ function Lights(canvasName) {
 
 
             if (removed) {
-                g[nI - 1].RopeSimulations.push(addRopeSim({x: g[nI - 1].X, y: g[nI - 1].Y }, { x: g[nI + 1].X, y: g[nI + 1].Y },true));
-                g[nI + 1].RopeSimulations[0] = addRopeSim({x: g[nI + 1].X, y: g[nI + 1].Y }, { x: g[nI - 1].X, y: g[nI - 1].Y }, false);
+                g[nI - 1].RopeSimulations.push(addRopeSim({ x: g[nI - 1].x, y: g[nI - 1].y }, { x: g[nI + 1].x, y: g[nI + 1].y }, true));
+                g[nI + 1].RopeSimulations[0] = addRopeSim({ x: g[nI + 1].x, y: g[nI + 1].y }, { x: g[nI - 1].x, y: g[nI - 1].y }, false);
 
                 that.Wires[j].Lights.splice(nI, 1);
                 return;
@@ -124,26 +144,26 @@ function Lights(canvasName) {
 
 
     }
-    
-    function addRopeSim(startPos,endPos,render) {
-     return   new Simulation(
-                30, // 80 Particles (Masses)
+
+    function addRopeSim(startPos, endPos, render) {
+        return new Simulation(
+                60, // 80 Particles (Masses)
                 0.05, // Each Particle Has A Weight Of 50 Grams
                 10000.0, // springConstant In The Rope 
                 1.7, // Spring Inner Friction Constant
                 {x: 0, y: 9.81 * 1499 }, // Gravitational Acceleration
                 0.9, // Air Friction Constant
-                startPos, endPos, render); 
+                startPos, endPos, render);
     }
 
     function canvasOnClick(e) {
         var cell = getCursorPosition(e);
-        for (var ij = 0; ij < that.Buttons.length; ij++) {
-            var button = that.Buttons[ij];
-            if (button.Y <= cell.y && button.Y + button.Height > cell.y && button.X <= cell.x && button.X + button.Width > cell.x) {
-                button.Clicking = true;
-                button.Click();
-                return e.preventDefault() && false;
+
+
+        for (var ij = 0; ij < that.UIAreas.length; ij++) {
+            var are = that.UIAreas[ij];
+            if (are.y <= cell.y && are.y + are.height > cell.y && are.x <= cell.x && are.x + are.width > cell.x) {
+                return are.click(e);
             }
         }
         if (e.shiftKey) {
@@ -177,10 +197,24 @@ function Lights(canvasName) {
             return (arr ? "[" : "{") + String(json) + (arr ? "]" : "}");
         }
     };
+    var mouseOffset = { x: 0, y: 0 };
     function canvasMouseMove(e) {
         e.preventDefault();
         var cell = getCursorPosition(e);
 
+        for (var ij = 0; ij < that.UIAreas.length; ij++) {
+            var are = that.UIAreas[ij];
+            if (are.y <= cell.y &&
+                    are.y + are.height > cell.y &&
+                        are.x <= cell.x && 
+                            are.x + are.width > cell.x) {
+                return are.mouseMove(cell);
+            }
+        }
+        
+        
+        cell.x -= mouseOffset.x;
+        cell.y -= mouseOffset.y;
         for (var j = 0; j < that.Wires.length; j++) {
             var g = that.Wires[j].Lights;
             for (var i = 0; i < g.length; i++) {
@@ -190,7 +224,7 @@ function Lights(canvasName) {
                             g[i].RopeSimulations[1].startPos = { x: cell.x, y: cell.y };
                         }
                     } else if (i == g.length - 1) {
-                        g[i ].RopeSimulations[0].startPos = { x: cell.x, y: cell.y };
+                        g[i].RopeSimulations[0].startPos = { x: cell.x, y: cell.y };
                         g[i - 1].RopeSimulations[1].endPos = { x: cell.x, y: cell.y };
                     }
                     else {
@@ -200,31 +234,31 @@ function Lights(canvasName) {
                         g[i].RopeSimulations[0].endPos = { x: cell.x, y: cell.y };
 
 
-                        g[i-1].RopeSimulations[1].endPos = { x: cell.x, y: cell.y };
-                        g[i+1].RopeSimulations[0].startPos = { x: cell.x, y: cell.y };
+                        g[i - 1].RopeSimulations[1].endPos = { x: cell.x, y: cell.y };
+                        g[i + 1].RopeSimulations[0].startPos = { x: cell.x, y: cell.y };
 
 
                     }
                     that.draw();
-                    g[i].X = cell.x;
-                    g[i].Y = cell.y;
-                    
-                    return;
+                    g[i].x = cell.x;
+                    g[i].y = cell.y;
+
+                    return false;
                 }
             }
         }
-
+        return false;
 
     }
     function canvasMouseUp(e) {
-
+        mouseOffset = { x: 0, y: 0 };
         var cell = getCursorPosition(e);
 
 
         for (var j = 0; j < that.Wires.length; j++) {
             var g = that.Wires[j].Lights;
             for (var i = 0; i < g.length; i++) {
-                if (inBounds(cell.x, cell.y, g[i].X, g[i].Y, 12)) {
+                if (inBounds(cell.x, cell.y, g[i].x, g[i].y, 12)) {
                     g[i].moving = false;
                     return;
                 }
@@ -233,10 +267,9 @@ function Lights(canvasName) {
 
 
 
-        for (var ij = 0; ij < that.Buttons.length; ij++) {
-            var button = that.Buttons[ij];
-            button.Clicking = false;
-
+        for (var ij = 0; ij < that.UIAreas.length; ij++) {
+            var area = that.UIAreas[ij];
+            area.mouseUp(e);
         }
 
     }
@@ -244,11 +277,26 @@ function Lights(canvasName) {
 
     var handleScroll = function (evt) {
         var delta = evt.wheelDelta ? evt.wheelDelta / 40 : evt.detail ? -evt.detail : 0;
+
+
+        for (var ij = 0; ij < that.UIAreas.length; ij++) {
+            var are = that.UIAreas[ij];
+            if (are.y <= evt.y && are.y + are.height > evt.y && are.y <= evt.x && are.y + are.width > evt.x) {
+                return are.scroll(evt);
+            }
+        }
+        
+        
         for (var j = 0; j < that.Wires.length; j++) {
             for (var k = 0; k < that.Wires[j].Lights.length; k++) {
                 for (var l = 0; l < that.Wires[j].Lights[k].RopeSimulations.length; l++) {
-                    if(that.Wires[j].Lights[k].RopeSimulations[l]) {
-                        that.Wires[j].Lights[k].RopeSimulations[l].springOffset += delta > 0 ? 0.0001 : -0.0001;
+                    var fc = that.Wires[j].Lights[k].RopeSimulations[l];
+                    if (fc) {
+                        fc.springOffset += delta > 0 ? 0.0003 : -0.0003;
+                        for (var i = 0; i < fc.masses.length; i++) {
+                            fc.getMass(i).applyForce({ x: 0, y: 50 });
+                        }
+                        fc.skipping = true;
                     }
                 }
             }
@@ -285,18 +333,9 @@ function Lights(canvasName) {
         that.canvasItem.fillStyle = "lightgrey";
         that.canvasItem.fillRect(0, 0, that.canvasWidth, that.canvasHeight);
 
-        that.canvasItem.fillStyle = "red";
-        that.canvasItem.font = "23pt Arial";
-
-        /*if (that.last)
-        that.canvasItem.fillText(that.last.x + " " + that.last.y, 100, 65);
-        if (that.draggingNode)
-        that.canvasItem.fillText(that.draggingNode, 100, 95);*/
         var ij;
         for (ij = 0; ij < that.Wires.length; ij++) {
             var wire = that.Wires[ij];
-
-
             var ic;
 
             for (ic = 0; ic < wire.Lights.length; ic++) {
@@ -306,76 +345,27 @@ function Lights(canvasName) {
                     light.RopeSimulations[1].draw(that.canvasItem);
                 }
 
-                that.canvasItem.lineWidth = 0;
-                that.canvasItem.lineJoin = "";
-                that.canvasItem.strokeStyle = "#000";
 
                 that.canvasItem.fillStyle = (light.moving ? "rgb(17,95,200)" : (wire.State ? wire.Color : Grey));
-                that.canvasItem.beginPath();
-                 
+                that.canvasItem.strokeStyle = "#FF0";
+
 
                 that.canvasItem.beginPath();
-                that.canvasItem.moveTo(light.X, light.Y);
-                that.canvasItem.bezierCurveTo(light.X - Light.W, light.Y + Light.H, light.X + Light.W, light.Y + Light.H, light.X+1, light.Y+1);
+                that.canvasItem.moveTo(light.x, light.y);
+                that.canvasItem.bezierCurveTo(light.x - Light.W, light.y + Light.H, light.x + Light.W, light.y + Light.H, light.x + 1, light.y + 1);
+                that.canvasItem.fill();
                 that.canvasItem.stroke();
-                that.canvasItem.fill();  
             }
         }
 
-        for (ij = 0; ij < that.Buttons.length; ij++) {
-            var button = that.Buttons[ij];
-
-
-
-            that.canvasItem.fillStyle = button.Color;
-            roundRect(that.canvasItem, button.X, button.Y, button.Width, button.Height, 5, true, true);
-            that.canvasItem.fillStyle = button.Clicking ? "#FCA" : "#334";
-            that.canvasItem.font = "13pt Arial bold";
-            that.canvasItem.fillText(button.Text, button.X + (button.Width / 4), button.Y + (button.Height / 3) * 2);
-        }
+        for (ij = 0; ij < that.UIAreas.length; ij++) {
+            var are = that.UIAreas[ij];
+            are.draw(that.canvasItem);
+        }   
     };
 
 
-    /**
-    * Draws a rounded rectangle using the current state of the canvas. 
-    * If you omit the last three params, it will draw a rectangle 
-    * outline with a 5 pixel border radius 
-    * @param {CanvasRenderingContext2D} ctx
-    * @param {Number} x The top left x coordinate
-    * @param {Number} y The top left y coordinate 
-    * @param {Number} width The width of the rectangle 
-    * @param {Number} height The height of the rectangle
-    * @param {Number} radius The corner radius. Defaults to 5;
-    * @param {Boolean} fill Whether to fill the rectangle. Defaults to false.
-    * @param {Boolean} stroke Whether to stroke the rectangle. Defaults to true.
-    */
-    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
-        if (typeof stroke == "undefined") {
-            stroke = true;
-        }
-        if (typeof radius === "undefined") {
-            radius = 5;
-        }
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(x + width - radius, y);
-        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-        ctx.lineTo(x + width, y + height - radius);
-        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-        ctx.lineTo(x + radius, y + height);
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.closePath();
-        if (stroke) {
-            ctx.stroke();
-        }
-        if (fill) {
-            ctx.fill();
-        }
-    }
-
-
+    
     $(window).resize(this.resizeCanvas);
     this.resizeCanvas();
     setInterval(this.draw, 10);
@@ -389,13 +379,13 @@ function Lights(canvasName) {
     }
     function tick3() {
 
-        addLight(Math.random() * that.canvasWidth, Math.random() * that.canvasHeight);
-        if(Math.random()*30<5) {
+        addLight(50 + (Math.random() * (that.canvasWidth - 100)), 50 + (Math.random() * (that.canvasHeight - 100)), true);
+        if (Math.random() * 30 < 5) {
             addEmptyWire(randColor());
         }
     }
     setInterval(tick2, 1000);
-    setInterval(tick3, 500);
+ 
 
 };
  

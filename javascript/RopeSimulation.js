@@ -34,6 +34,9 @@ function Mass(m) {
     this.applyForce = function (force) {
         this.force = Vector2D.Add(this.force, force);
     };
+    this.applyVelocity = function (force) {
+        this.vel = Vector2D.Add(this.vel, force);
+    };
     this.init = function () {
         this.force.x = 0;
         this.force.y = 0;
@@ -96,7 +99,7 @@ function Simulation(numOfMasses, m,
         this.masses[a] = new Mass(m);
     }
 
-    this.springConstant = 0.0375 ;
+    this.springConstant = 0.0375/2 ;
     
     this.getMass = function (index) {
         if (index < 0 || index >= this.numOfMasses)		// if the index is not in the array
@@ -129,27 +132,24 @@ function Simulation(numOfMasses, m,
         if (!this.message[2]) this.message[2] = 0;
         this.message[0] = "";
 
-        if (yy > -0.005 && yy < 0.0005 && xx > -0.005 && xx < 0.0005 && !this.skipping && (this.startPos.x == this.lastStartPos.x && this.startPos.y == this.lastStartPos.y && this.endPos.x == this.lastEndPos.x && this.endPos.y == this.lastEndPos.y) && this.tiz++ % 6 > 0) {
+        if (yy > -0.005 && yy < 0.0005 && xx > -0.005 && xx < 0.0005 && !this.skipping && (this.startPos.x == this.lastStartPos.x && this.startPos.y == this.lastStartPos.y && this.endPos.x == this.lastEndPos.x && this.endPos.y == this.lastEndPos.y)) {
+            //&& this.tiz++ % 6 > 0
             this.message[0] = "good";
             this.message[2]++;
             return;
         }
-        this.message[1]++;
+        this.message[1]++; 
+
+        if (!this.skipping)
+            this.init(); // Step 1: reset forces to zero 
         this.skipping = false;
- 
-        this.lastStartPos = this.startPos;
-        this.lastEndPos = this.endPos;
-
-
-
-        this.init(); // Step 1: reset forces to zero 
         this.solve(); // Step 2: apply forces
         this.simulate(dt);
     };
     this.springs = [];
     this.gravitation = gravitation;
     this.startPos = startPos ? startPos : { x: 0, y: 0 };
-    this.ropeConnectionVel = { x: 0, y: 0 };
+    
     this.airFrictionConstant = airFrictionConstant;
 
 
@@ -194,9 +194,15 @@ function Simulation(numOfMasses, m,
     this.simulate = function (dt) {
 
         var b;
- 
 
 
+
+         this.masses[0].vel = Vector2D.Add(this.masses[0].vel, Vector2D.Sub(this.startPos, this.lastStartPos));
+
+          this.masses[this.numOfMasses - 1].vel = Vector2D.Add(this.masses[this.numOfMasses - 1].vel, Vector2D.Sub(this.endPos, this.lastEndPos));
+
+        this.lastStartPos = this.startPos;
+        this.lastEndPos = this.endPos;
 
         for (b = 0; b < this.numOfMasses; ++b)
             this.masses[b].simulate(dt);
@@ -206,13 +212,9 @@ function Simulation(numOfMasses, m,
             this.springs[b].springLength = sc;
         }
 
-
-        this.startPos = Vector2D.Add(this.startPos, Vector2D.Mul(this.ropeConnectionVel, dt)); //iterate the positon of startPos
-
-
-        this.masses[0].pos = this.startPos; //mass with index "0" shall position at startPos
-
+        this.masses[0].pos = this.startPos;
         this.masses[this.numOfMasses - 1].pos = this.endPos;
+         
 
 
     };
@@ -234,8 +236,7 @@ function Simulation(numOfMasses, m,
     this.draw = function (canv) {
 
         canv.fillStyle = WireColor;
-        canv.lineWidth = 2;
-        canv.lineJoin = "round";
+        canv.lineWidth = 2; 
         canv.strokeStyle = "#333";
         var b;
         for (b = 0; b < this.numOfMasses; ++b) {
