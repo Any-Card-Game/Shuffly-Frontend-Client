@@ -64,6 +64,7 @@ function GCanvas(canvasName) {
 
     document.getElementById(canvasName).addEventListener('touchmove', canvasMouseMove);
     document.getElementById(canvasName).addEventListener('touchstart', canvasOnClick);
+    document.getElementById(canvasName).addEventListener('click', canvasOnClick);
     document.getElementById(canvasName).addEventListener('touchend', canvasMouseUp);
 
 
